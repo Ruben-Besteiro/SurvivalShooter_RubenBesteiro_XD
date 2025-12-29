@@ -18,6 +18,7 @@ class SURVIVALSHOOTER_API AEnemyController : public AAIController
 public:
 	AEnemyController();
 	void ChangeState(uint8 State);
+	void GG();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -32,5 +33,4 @@ private:
 
 	UFUNCTION()
 	void OnSensed(AActor* Actor, FAIStimulus Stimulus);
-
 };

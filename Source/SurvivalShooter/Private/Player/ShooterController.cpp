@@ -2,15 +2,68 @@
 
 
 #include "Player/ShooterController.h"
+
+#include "AIController.h"
 #include "EnhancedInputSubsystems.h"
+#include "AI/BaseEnemy.h"
+#include "AI/SecondEnemy.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "BrainComponent.h"
+#include "AI/SecondEnemyStates.h"
 #include "GameFramework/GameModeBase.h"
 
+// Cuando muere el jugador, hacemos que los enemigos salgan volando
 void AShooterController::PawnDead()
 {
-	GetPawn()->SetLifeSpan(3.0f);
-	UnPossess(); //Desvinculo el pawn del controlador. No hay inputs.
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &AShooterController::DestroyDelayed, 3.0f, false);
+	APawn* MyPawn = GetPawn();
+	if (MyPawn)
+	{
+		MyPawn->SetLifeSpan(3.0f); // destruye el jugador tras 3 seg
+		UnPossess();
+	}
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+	
+	TArray<AActor*> Enemies;
+	UGameplayStatics::GetAllActorsOfClass(World, ABaseEnemy::StaticClass(), Enemies);
+
+	TArray<AActor*> SecondFound;
+	UGameplayStatics::GetAllActorsOfClass(World, ASecondEnemy::StaticClass(), SecondFound);
+	Enemies.Append(SecondFound);
+
+	for (AActor* Actor : Enemies)
+	{
+		if (APawn* EnemyPawn = Cast<APawn>(Actor))
+		{
+			if (AAIController* AICon = Cast<AAIController>(EnemyPawn->GetController()))
+			{
+				if (UBrainComponent* Brain = AICon->GetBrainComponent())
+				{
+					Brain->StopLogic("PlayerDead");
+				}
+				AICon->UnPossess();
+			}
+			
+			if (USkeletalMeshComponent* Mesh = EnemyPawn->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				Mesh->SetSimulatePhysics(true);
+				Mesh->SetCollisionProfileName("Ragdoll");
+
+				// Vector random unitario multiplicado por fuerza
+				FVector RandomImpulse = FVector(FMath::FRandRange(-1.f,1.f), 
+												FMath::FRandRange(-1.f,1.f), 
+												FMath::FRandRange(0.5f,1.f)).GetSafeNormal() * 1500.f;
+
+				Mesh->AddImpulse(RandomImpulse, NAME_None, true);
+			}
+
+			EnemyPawn->SetLifeSpan(5.f);
+		}
+	}
+	
+	World->GetTimerManager().SetTimer(TimerHandle, this, &AShooterController::DestroyDelayed, 3.0f, false);
 }
 
 

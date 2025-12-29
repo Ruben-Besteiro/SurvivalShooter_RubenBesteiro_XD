@@ -82,3 +82,9 @@ void AEnemyController::ChangeState(uint8 State)
 {
 	GetBlackboardComponent()->SetValueAsEnum("CurrentState", State);
 }
+
+void AEnemyController::GG()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Jugador muerto"));
+	ChangeState(static_cast<uint8>(ESecondEnemyStates::Investigate));
+}

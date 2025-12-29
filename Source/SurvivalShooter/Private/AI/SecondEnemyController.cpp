@@ -17,16 +17,13 @@ void ASecondEnemyController::BeginPlay()
     Super::BeginPlay();
     RunBehaviorTree(BehaviorTree);
     
-    // ⬇️ RENOMBRADO ⬇️
-    ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));
-    
-    // ⬇️ CORREGIDO: ASecondEnemyController en vez de AEnemyController ⬇️
     AIPerception->OnTargetPerceptionUpdated.AddDynamic(this, &ASecondEnemyController::OnSensed);
+    ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));
 }
+
 
 void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 {
-    UE_LOG(LogTemp, Warning, TEXT("El segundo enemigo sintió algo!!!"));
     auto SenseType = UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus);
     
     ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState"));
@@ -37,33 +34,24 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
         if (Stimulus.WasSuccessfullySensed())
         {
             GetBlackboardComponent()->SetValueAsObject("Target", Actor);
-            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));  // ⬅️ Renombrado
+            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
         }
         else
         {
-            GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
-            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));  // ⬅️ Renombrado
+            /*GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
+            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));*/
         }
     }
-    else if (SenseType == UAISense_Hearing::StaticClass() && CurrentState != ESecondEnemyStates::Chase)
+    else if (SenseType == UAISense_Hearing::StaticClass())
     {
         // Comentado...
     }
-    else if (SenseType == UAISense_Damage::StaticClass() && CurrentState != ESecondEnemyStates::Chase)
+    else if (SenseType == UAISense_Damage::StaticClass())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Enemigo 2: Me han dañado!!!"));
         if (Stimulus.WasSuccessfullySensed())
         {
-            UE_LOG(LogTemp, Warning, TEXT("Enemigo 2: Me han dañado!!!"));
-            FVector DamageDirection = Stimulus.StimulusLocation - GetPawn()->GetActorLocation();
-            DamageDirection.Z = 0;
-            DamageDirection.Normalize();
-            
-            FVector InterestLocation = GetPawn()->GetActorLocation() + DamageDirection * 800;
-
-            GetBlackboardComponent()->SetValueAsVector("PointOfInterest", InterestLocation);
-            GetBlackboardComponent()->ClearValue("CurrentState");
-            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));  // ⬅️ Renombrado
+            GetBlackboardComponent()->SetValueAsObject("Target", Actor);
+            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
         }
     }
     else
@@ -72,8 +60,8 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
     }
 }
 
-// ⬇️ RENOMBRADO ⬇️
 void ASecondEnemyController::ChangeEnemyState(uint8 State)
 {
     GetBlackboardComponent()->SetValueAsEnum("CurrentState", State);
+    UE_LOG(LogTemp, Warning, TEXT("Estado cambiado a %d"), State);
 }

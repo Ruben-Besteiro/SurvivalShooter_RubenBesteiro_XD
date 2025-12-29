@@ -8,6 +8,7 @@
 #include "Perception/AISenseEvent.h"
 #include "Perception/AISense_Damage.h"
 #include "Perception/AISense_Damage.h"
+#include "Physics/ImmediatePhysics/ImmediatePhysicsShared/ImmediatePhysicsCore.h"
 #include "Player/ShooterController.h"
 
 
@@ -51,23 +52,46 @@ float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 		
 		//Comunico al controlador que hemos muerto
 		ShooterController->PawnDead();
-		
+		Destroy();
 	}
 	return CurrentHealth;
 }
 
-// Called every frame
+
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	Timer += DeltaTime;
-	
+
 	if (GetVelocity().Length() >= NoiseThreshold)
 	{
 		MakeNoise(1, this, GetActorLocation());
 	}
 
+	// --- Comprobación de suelo Jumpable ---
+	FVector Start = GetActorLocation();
+	FVector End = Start - FVector(0.f, 0.f, 100.f); // hacia abajo
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	CanJump = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_GameTraceChannel2, // Jumpable
+		Params
+	);
+
+	if (CanJump && Hit.GetActor())
+	{
+		IsJumping = false;
+	}
+
+	// Debug opcional
+	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 0.f, 0, 1.f);
 }
 
 // Called to bind functionality to input
@@ -79,7 +103,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AShooterCharacter::Look);
 	Input->BindAction(ShootAction, ETriggerEvent::Triggered, this, &AShooterCharacter::Shoot);
 	Input->BindAction(RechargeAction, ETriggerEvent::Started, this, &AShooterCharacter::Recharge);
-
+	Input->BindAction(JumpAction, ETriggerEvent::Started, this, &AShooterCharacter::Jump);
 }
 
 void AShooterCharacter::Move(const FInputActionValue& InputActionValue)
@@ -194,6 +218,17 @@ void AShooterCharacter::Recharge()
 			ShooterController->ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 		},1.5f,false
 	);
+}
+
+void AShooterCharacter::Jump()
+{
+	if (CanJump)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Jumping"));
+		LaunchCharacter(FVector(0, 0, 600), false, true);
+		IsJumping = true;
+		CanJump = false;
+	}
 }
 
 void AShooterCharacter::Cure(int HPAmount)

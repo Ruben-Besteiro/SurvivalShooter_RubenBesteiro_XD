@@ -8,6 +8,7 @@
 #include "AI/PatrolPath.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Player/ShooterController.h"
 
 // Sets default values
@@ -92,5 +93,4 @@ void ABaseEnemy::OnAttackHit()
 	{
 		UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
 	}
-	
 }

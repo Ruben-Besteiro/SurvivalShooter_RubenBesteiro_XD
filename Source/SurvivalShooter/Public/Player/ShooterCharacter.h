@@ -32,6 +32,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	float CurrentHealth;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Inputs")
 	UInputAction* MoveAction;
@@ -44,6 +46,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Inputs")
 	UInputAction* RechargeAction;
+
+	UPROPERTY(EditAnywhere, Category = "Inputs")
+	UInputAction* JumpAction;
 
 	UPROPERTY(EditAnywhere, Category= "Effects")
 	UParticleSystem* ShootParticles;
@@ -59,8 +64,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float BaseDamage = 20;
-	
-	float CurrentHealth;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float MaxHealth = 100;
@@ -71,7 +74,7 @@ private:
 	int CurrentReserveAmmo;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
-	int MaxChargerAmmo = 50;
+	int MaxChargerAmmo = 20;
 
 	int CurrentChargerAmmo;
 
@@ -80,12 +83,18 @@ private:
 	
 	float Timer;
 
+	bool CanJump = false;
+
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	bool IsRecharging;
+
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+	bool IsJumping;
 	
 	void Move(const FInputActionValue& InputActionValue);
 	void Look(const FInputActionValue& InputActionValue);
 	void DoShotEffect();
 	void Shoot();
 	void Recharge();
+	void Jump();
 };
