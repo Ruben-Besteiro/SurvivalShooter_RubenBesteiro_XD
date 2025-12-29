@@ -18,7 +18,6 @@ APatrolPath::APatrolPath()
 void APatrolPath::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame

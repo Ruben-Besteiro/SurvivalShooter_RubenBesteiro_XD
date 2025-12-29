@@ -2,13 +2,8 @@
 
 #include "Player/ShooterCharacter.h"
 #include "EnhancedInputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Perception/AIPerceptionSystem.h"
-#include "Perception/AISenseEvent.h"
 #include "Perception/AISense_Damage.h"
-#include "Perception/AISense_Damage.h"
-#include "Physics/ImmediatePhysics/ImmediatePhysicsShared/ImmediatePhysicsCore.h"
 #include "Player/ShooterController.h"
 
 
@@ -31,7 +26,7 @@ AShooterCharacter::AShooterCharacter()
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	PlayerCamera = FindComponentByClass<UCameraComponent>();
 }
 
 float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
@@ -69,9 +64,9 @@ void AShooterCharacter::Tick(float DeltaTime)
 		MakeNoise(1, this, GetActorLocation());
 	}
 
-	// --- Comprobación de suelo Jumpable ---
+	// Comprobación de suelo Jumpable
 	FVector Start = GetActorLocation();
-	FVector End = Start - FVector(0.f, 0.f, 100.f); // hacia abajo
+	FVector End = Start - FVector(0.f, 0.f, 100.f);
 
 	FHitResult Hit;
 	FCollisionQueryParams Params;
@@ -89,9 +84,6 @@ void AShooterCharacter::Tick(float DeltaTime)
 	{
 		IsJumping = false;
 	}
-
-	// Debug opcional
-	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 0.f, 0, 1.f);
 }
 
 // Called to bind functionality to input

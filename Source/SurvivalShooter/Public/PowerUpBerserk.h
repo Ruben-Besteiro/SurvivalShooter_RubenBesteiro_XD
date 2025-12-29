@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PowerUp.h"
+#include "Camera/CameraComponent.h"
 #include "PowerUpBerserk.generated.h"
 
 /**
@@ -19,6 +20,7 @@ public:
 	APowerUpBerserk();
 	
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	void BackToNormal();
 
 protected:
 	// Called when the game starts or when spawned
@@ -34,4 +36,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int Seconds;
+
+	UCameraComponent* PlayerCamera;
 };
