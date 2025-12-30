@@ -245,3 +245,41 @@ void AShooterCharacter::AddAmmo(int AmmoAmount)
 	auto ShooterController = Cast<AShooterController>(GetController());
 	ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 }
+
+void AShooterCharacter::ApplyBerserkEffect(int Seconds)
+{
+	UCameraComponent* Camera = FindComponentByClass<UCameraComponent>();
+	if (!Camera) return;
+
+	// Guardamos el postprocess original (solo la primera vez)
+	OGPostProcess = Camera->PostProcessSettings;
+	FPostProcessSettings& PPS = Camera->PostProcessSettings;
+
+	// Tinte verde para simular como si el jugador estuviese drogado
+	PPS.bOverride_ColorGain = true;
+	PPS.ColorGain = FVector4(0, 1, 0, 1);
+
+	PPS.bOverride_ColorSaturation = true;
+	PPS.ColorSaturation = FVector4(1, 2, 1, 1);
+
+	PPS.bOverride_ColorContrast = true;
+	PPS.ColorContrast = FVector4(2, 2, 2, 1);
+
+	OGTimeBetweenAttacks = TimeBetweenAttacks;
+	OGMoveSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	TimeBetweenAttacks = 0.066f;
+	GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed * 2;
+
+	FTimerHandle BerserkTimerHandle;
+	GetWorldTimerManager().SetTimer(
+		BerserkTimerHandle,
+		[this, Camera]()
+		{
+			if (!IsValid(Camera)) return;
+			Camera->PostProcessSettings = OGPostProcess;
+			TimeBetweenAttacks = OGTimeBetweenAttacks;
+			GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed;
+		},Seconds,false
+		);
+}
+

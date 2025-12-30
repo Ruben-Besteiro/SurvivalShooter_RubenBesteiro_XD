@@ -38,7 +38,6 @@ void ASecondEnemy::Tick(float DeltaTime)
 
 	ASecondEnemyController* AIController = Cast<ASecondEnemyController>(GetController());
 	if (!AIController) return;
-	UE_LOG(LogTemp, Error, TEXT("%i"), AIController->bRotating);
 	UBlackboardComponent* BBComp = AIController->GetBlackboardComponent();
 	if (!BBComp) return;
 

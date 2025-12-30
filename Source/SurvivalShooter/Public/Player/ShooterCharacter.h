@@ -4,7 +4,9 @@
 
 #include "InputAction.h"
 #include "CoreMinimal.h"
+#include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "ShooterCharacter.generated.h"
 
 UCLASS()
@@ -18,6 +20,8 @@ public:
 	
 	void Cure(int HPAmount);
 	void AddAmmo(int AmmoAmount);
+	void ApplyBerserkEffect(int Seconds);
+	void UnapplyBerserkEffect();
 
 protected:
 	// Called when the game starts or when spawned
@@ -102,7 +106,11 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	bool IsJumping;
-	
+
+	FPostProcessSettings OGPostProcess;
+	float OGTimeBetweenAttacks;
+	float OGMoveSpeed;
+
 	void Move(const FInputActionValue& InputActionValue);
 	void Look(const FInputActionValue& InputActionValue);
 	void DoShotEffect();

@@ -22,7 +22,7 @@ void AEnemyController::BeginPlay()
 	Super::BeginPlay();
 	RunBehaviorTree(BehaviorTree);
 	// Al principio del juego cambio a estado Patrol aunque sea el de menor prioridad
-	ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Patrol));
+	ChangeEnemyState(static_cast<uint8>(EEnemyStates::Patrol));
 
 	
 	//Se ejecuta cuando mi percepción es actualizada.
@@ -36,7 +36,7 @@ void AEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 	
 	auto SenseType = UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus);
 	
-	ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState"));
+	EEnemyStates CurrentState = static_cast<EEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState"));
 	
 	//Se ha actualizado el sentido de la vista¿?
 	if (SenseType == UAISense_Sight::StaticClass())
@@ -45,16 +45,16 @@ void AEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 		{
 			GetBlackboardComponent()->SetValueAsObject("Target", Actor);
 			
-			ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
+			ChangeEnemyState(static_cast<uint8>(EEnemyStates::Chase));
 		}
 		else //Negativo: He dejado de ver algo.
 		{
 			GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
-			ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Investigate));
+			ChangeEnemyState(static_cast<uint8>(EEnemyStates::Investigate));
 		}
 	}
 	//Si escucho algo y no estoy persiguiendo.
-	else if (SenseType == UAISense_Hearing::StaticClass() && CurrentState != ESecondEnemyStates::Chase)
+	else if (SenseType == UAISense_Hearing::StaticClass() && CurrentState != EEnemyStates::Chase)
 	{
 		// if (Stimulus.WasSuccessfullySensed())
 		// {
@@ -62,7 +62,7 @@ void AEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 		// 	ChangeState(static_cast<uint8>(EEnemyStates::Investigate));
 		// }
 	}
-	else if (SenseType == UAISense_Damage::StaticClass() && CurrentState != ESecondEnemyStates::Chase)
+	else if (SenseType == UAISense_Damage::StaticClass() && CurrentState != EEnemyStates::Chase)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Me han dañado!!!"));
 		if (Stimulus.WasSuccessfullySensed())
@@ -76,7 +76,7 @@ void AEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 
 			GetBlackboardComponent()->SetValueAsVector("PointOfInterest", InterestLocation);
 			GetBlackboardComponent()->ClearValue("CurrentState");		// Para reiniciar el estado actual (?)
-			ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Investigate));
+			ChangeEnemyState(static_cast<uint8>(EEnemyStates::Investigate));
 		}
 	}
 }
@@ -89,5 +89,5 @@ void AEnemyController::ChangeEnemyState(uint8 State)
 void AEnemyController::GG()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Jugador muerto"));
-	ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Investigate));
+	ChangeEnemyState(static_cast<uint8>(EEnemyStates::Investigate));
 }

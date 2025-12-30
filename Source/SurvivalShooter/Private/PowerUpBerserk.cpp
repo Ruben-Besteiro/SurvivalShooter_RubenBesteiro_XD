@@ -24,12 +24,14 @@ void APowerUpBerserk::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+
+
 void APowerUpBerserk::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		AShooterCharacter* Player = Cast<AShooterCharacter>(OtherActor);
-		UE_LOG(LogTemp, Warning, TEXT("Berserk pillado"));
+		Player->ApplyBerserkEffect(Seconds);
 		SetActorHiddenInGame(true);
 		SetActorEnableCollision(false);
 		SetActorTickEnabled(false);
