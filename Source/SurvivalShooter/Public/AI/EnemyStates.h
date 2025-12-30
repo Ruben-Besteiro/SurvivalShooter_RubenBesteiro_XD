@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-enum class EEnemyStates : uint8
+enum class ESecondEnemyStates : uint8
 {
 	Patrol   UMETA(DisplayName = "Patrol"),
 	Chase    UMETA(DisplayName = "Chase"),

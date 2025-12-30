@@ -31,4 +31,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	int HPAmount;
+
+	UPROPERTY(EditAnywhere, Category= "Sounds")
+	USoundBase* PickUpHealthSound;
 };

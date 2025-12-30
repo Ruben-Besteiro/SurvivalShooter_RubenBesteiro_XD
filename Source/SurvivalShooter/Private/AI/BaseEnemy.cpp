@@ -8,7 +8,7 @@
 #include "AI/PatrolPath.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "BehaviorTree/BlackboardComponent.h"
+
 #include "Player/ShooterController.h"
 
 // Sets default values
@@ -18,14 +18,55 @@ ABaseEnemy::ABaseEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 	AttackPoint = CreateDefaultSubobject<USceneComponent>("AttackPoint");
 	AttackPoint->SetupAttachment(RootComponent); //Pongo el empty como hijo del comp. raíz.
+}
 
+void ABaseEnemy::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Los enemigos al spawnear pillan el PatrolPath más cercano
+	if (!PatrolPath)
+	{
+		TArray<AActor*> Paths;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APatrolPath::StaticClass(), Paths);
+
+		float MinDistanceSq = TNumericLimits<float>::Max();
+		APatrolPath* ClosestPath = nullptr;
+
+		for (AActor* Actor : Paths)
+		{
+			APatrolPath* Path = Cast<APatrolPath>(Actor);
+			if (!Path) continue;
+
+			float DistSq = FVector::DistSquared(GetActorLocation(), Path->GetActorLocation());
+			if (DistSq < MinDistanceSq)
+			{
+				MinDistanceSq = DistSq;
+				ClosestPath = Path;
+			}
+		}
+
+		PatrolPath = ClosestPath;
+	}
 }
 
 FVector ABaseEnemy::GetNextPatrolPoint()
 {
-	CurrentIndex = (CurrentIndex + 1) % PatrolPath->GetSplineComponent()->GetNumberOfSplinePoints();
-	
-	return PatrolPath->GetSplineComponent()->GetLocationAtSplinePoint(CurrentIndex, ESplineCoordinateSpace::World);
+	if (!PatrolPath)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PatrolPath es NULL en %s"), *GetName());
+		return GetActorLocation();
+	}
+
+	USplineComponent* Spline = PatrolPath->GetSplineComponent();
+	if (!Spline || Spline->GetNumberOfSplinePoints() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Spline inválido o vacío"));
+		return GetActorLocation();
+	}
+
+	CurrentIndex = (CurrentIndex + 1) % Spline->GetNumberOfSplinePoints();
+	return Spline->GetLocationAtSplinePoint(CurrentIndex, ESplineCoordinateSpace::World);
 }
 
 void ABaseEnemy::PlayAttackMontage()
@@ -36,13 +77,6 @@ void ABaseEnemy::PlayAttackMontage()
 void ABaseEnemy::SetIsStrafing(bool NewStrafingState)
 {
 	bIsStrafing = NewStrafingState;
-}
-
-// Called when the game starts or when spawned
-void ABaseEnemy::BeginPlay()
-{
-	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -70,7 +104,7 @@ float ABaseEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 			MyController->GetBrainComponent()->StopLogic("Death");
 			SetLifeSpan(3.0f);
 			AShooterController* A = Cast<AShooterController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-			A->ActualizarKillsDesdeFueraPorqueSiNoNoFunciona();
+			A->ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
 		}
 	}
 	//Puedo retornar ncualquier tipo de float para dar información del golpe al causante del daño.
@@ -91,6 +125,7 @@ void ABaseEnemy::OnAttackHit()
 
 	for (FOverlapResult Result : Results)
 	{
-		UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
+		// Si el enemigo pega a otro enemigo, no ocurre nada
+		if (Result.GetActor()->ActorHasTag("Player")) UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
 	}
 }

@@ -10,12 +10,13 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "BrainComponent.h"
-#include "AI/SecondEnemyStates.h"
 #include "GameFramework/GameModeBase.h"
+#include "Components/AudioComponent.h"
 
 // Cuando muere el jugador, hacemos que los enemigos salgan volando
 void AShooterController::PawnDead()
 {
+	MusicComponent->Stop();
 	APawn* MyPawn = GetPawn();
 	if (MyPawn)
 	{
@@ -71,8 +72,7 @@ void AShooterController::PawnDead()
 void AShooterController::BeginPlay()
 {
 	Super::BeginPlay();
-
-
+	
 	HealthBarWidget = CreateWidget(this, HealthBar);
 	HealthBarWidget->AddToViewport();
 	
@@ -81,19 +81,38 @@ void AShooterController::BeginPlay()
 
 	//Asociar mapa de controles en el controller
 	Input->AddMappingContext(MappingContext, 0);
+
+	//UGameplayStatics::PlaySound2D(GetWorld(), Music);
+	MusicComponent = NewObject<UAudioComponent>(this);
+	MusicComponent->bAutoActivate = false;
+	MusicComponent->SetSound(Music);
+	MusicComponent->SetVolumeMultiplier(0.3f);		// Esto es para que los SFX se oigan
+	MusicComponent->RegisterComponent();
+
+	// Esto es para reiniciar la música cuando se termine
+	MusicComponent->OnAudioFinished.AddDynamic(this, &AShooterController::OnMusicFinished);
+	
+	MusicComponent->Play();
 }
 
-void AShooterController::ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo)
+void AShooterController::OnMusicFinished()
 {
+	if (!IsValid(GetPawn())) return;
+	if (Cast<AShooterCharacter>(GetPawn())->CurrentHealth > 0) MusicComponent->Play();		// En game over es mejor que se calle
+}
+
+void AShooterController::ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo)
+{
+	if (!IsValid(GetPawn())) return;
 	UpdateAmmo(CurrentReserveAmmo, CurrentChargerAmmo);
 }
 
-void AShooterController::ActualizarVidaDesdeFueraPorqueSiNoNoFunciona(float e)
+void AShooterController::ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e)
 {
 	UpdateHealth(e);
 }
 
-void AShooterController::ActualizarKillsDesdeFueraPorqueSiNoNoFunciona()
+void AShooterController::ActualizarKillsDesdeAquiPorqueSiNoNoFunciona()
 {
 	Kills++;
 	UE_LOG(LogTemp, Log, TEXT("Matates al enemigo"));

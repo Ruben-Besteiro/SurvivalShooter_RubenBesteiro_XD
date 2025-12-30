@@ -26,8 +26,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	float RotationSpeed;
-
 	void PlayAttackMontage();
 
 private:
@@ -38,16 +36,19 @@ private:
 	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stats")
-	float AttackRadius = 150;
+	float AttackRadius = 75;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stats")
-	float BaseDamage = 99999.0f;
+	float BaseDamage = 50;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Stats")
 	float Health = 200;
 
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	bool bIsStrafing;
+
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+	float RotationSpeed;
 
 	bool Muerto = false;
 

@@ -29,9 +29,9 @@ public:
 
 	int Kills = 0;
 	
-	void ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo);
-	void ActualizarVidaDesdeFueraPorqueSiNoNoFunciona(float e);
-	void ActualizarKillsDesdeFueraPorqueSiNoNoFunciona();
+	void ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo);
+	void ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e);
+	void ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,6 +52,15 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UUserWidget* AmmoWidget;
 
+	UPROPERTY(EditAnywhere, Category = "Music");
+	UAudioComponent* MusicComponent;
+
+	UPROPERTY(EditAnywhere, Category = "Music");
+	USoundBase* Music;
+
 	FTimerHandle TimerHandle;
 	void DestroyDelayed();
+
+	UFUNCTION()
+	void OnMusicFinished();
 };

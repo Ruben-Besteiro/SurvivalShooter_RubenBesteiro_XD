@@ -23,7 +23,6 @@ public:
 private:
 	FRotator TargetRotation;
 	float RotationSpeed;
-	bool bRotating;
 
 	// Para debug final
 	void LogRotationDebug(AActor* Pawn);

@@ -17,7 +17,7 @@ class SURVIVALSHOOTER_API AEnemyController : public AAIController
 
 public:
 	AEnemyController();
-	void ChangeState(uint8 State);
+	void ChangeEnemyState(uint8 State);
 	void GG();
 	
 protected:

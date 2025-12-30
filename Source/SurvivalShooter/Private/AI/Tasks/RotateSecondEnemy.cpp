@@ -7,13 +7,13 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "AI/SecondEnemyController.h"
 #include "AI/SecondEnemyStates.h"
 
 URotateSecondEnemy::URotateSecondEnemy()
 {
     bNotifyTick = true;   // Permite usar TickTask
-    RotationSpeed = 180.f; // grados por segundo
-    bRotating = false;
+    RotationSpeed = 180; // grados por segundo
 }
 
 EBTNodeResult::Type URotateSecondEnemy::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -27,14 +27,15 @@ EBTNodeResult::Type URotateSecondEnemy::ExecuteTask(UBehaviorTreeComponent& Owne
 
     TargetRotation = CurrentRot + FRotator(0.f, RandomYaw, 0.f);
     TargetRotation.Normalize();
-    bRotating = true;
+    Cast<ASecondEnemyController>(AICon)->bRotating = true;
 
     return EBTNodeResult::InProgress;
 }
 
 void URotateSecondEnemy::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-    if (!bRotating) return;
+    AAIController* AICon = OwnerComp.GetAIOwner();
+    if (!Cast<ASecondEnemyController>(AICon)->bRotating) return;
 
     auto BB = OwnerComp.GetBlackboardComponent();
     uint8 CurrentState = BB->GetValueAsEnum("CurrentState");
@@ -46,8 +47,7 @@ void URotateSecondEnemy::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
         return;
     }
-
-    AAIController* AICon = OwnerComp.GetAIOwner();
+    
     ACharacter* Pawn = Cast<ACharacter>(AICon->GetPawn());
     FRotator CurrentRot = Pawn->GetActorRotation();
     FRotator NewRot = FMath::RInterpConstantTo(CurrentRot, TargetRotation, DeltaSeconds, RotationSpeed);
@@ -58,7 +58,7 @@ void URotateSecondEnemy::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
 
     if (NewRot.Equals(TargetRotation, 1.f))
     {
-        bRotating = false;
+        Cast<ASecondEnemyController>(AICon)->bRotating = true;
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }
 }

@@ -9,6 +9,7 @@
 
 ASecondEnemyController::ASecondEnemyController()
 {
+    //PrimaryActorTick.bCanEverTick = true;
     AIPerception = CreateDefaultSubobject<UAIPerceptionComponent>("AI Perception");
 }
 
@@ -21,13 +22,18 @@ void ASecondEnemyController::BeginPlay()
     ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));
 }
 
-
 void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 {
+    // No queremos que los enemigos se peguen entre sí
+    if (!Actor->ActorHasTag("Player")) return;
+    
     auto SenseType = UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus);
     
-    ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState"));
+    ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState2"));
     UE_LOG(LogTemp, Warning, TEXT("El estado actual es %d"), static_cast<int>(CurrentState));
+
+    // Si el enemigo está huyendo, deja de sentir cosas
+    if (CurrentState == ESecondEnemyStates::Flee) return;
     
     if (SenseType == UAISense_Sight::StaticClass())
     {
@@ -36,15 +42,10 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
             GetBlackboardComponent()->SetValueAsObject("Target", Actor);
             ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
         }
-        else
-        {
-            /*GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
-            ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Wait));*/
-        }
     }
     else if (SenseType == UAISense_Hearing::StaticClass())
     {
-        // Comentado...
+        // Nada...
     }
     else if (SenseType == UAISense_Damage::StaticClass())
     {
@@ -54,14 +55,10 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
             ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
         }
     }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Sentido desconocido"));
-    }
 }
 
 void ASecondEnemyController::ChangeEnemyState(uint8 State)
 {
-    GetBlackboardComponent()->SetValueAsEnum("CurrentState", State);
-    UE_LOG(LogTemp, Warning, TEXT("Estado cambiado a %d"), State);
+    GetBlackboardComponent()->SetValueAsEnum("CurrentState2", State);
+    bRotating = false;
 }

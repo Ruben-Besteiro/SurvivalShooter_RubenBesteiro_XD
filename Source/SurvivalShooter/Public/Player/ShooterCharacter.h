@@ -5,7 +5,6 @@
 #include "InputAction.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Camera/CameraComponent.h"
 #include "ShooterCharacter.generated.h"
 
 UCLASS()
@@ -23,6 +22,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 public:	
@@ -33,9 +33,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	float CurrentHealth;
-
-	// Esto se utiliza para el powerup de berserk
-	UCameraComponent* PlayerCamera;
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Inputs")
@@ -83,6 +80,18 @@ private:
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float NoiseThreshold = 400;
+
+	UPROPERTY(EditAnywhere, Category= "Sounds")
+	USoundBase* JumpSound;
+
+	UPROPERTY(EditAnywhere, Category= "Sounds")
+	USoundBase* ShootSound;
+
+	UPROPERTY(EditAnywhere, Category= "Sounds")
+	USoundBase* RechargeSound;
+	
+	UPROPERTY(EditAnywhere, Category= "Sounds")
+	USoundBase* DeadSound;
 	
 	float Timer;
 

@@ -2,8 +2,13 @@
 
 #include "Player/ShooterCharacter.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/AIPerceptionSystem.h"
+#include "Perception/AISenseEvent.h"
 #include "Perception/AISense_Damage.h"
+#include "Perception/AISense_Damage.h"
+#include "Physics/ImmediatePhysics/ImmediatePhysicsShared/ImmediatePhysicsCore.h"
 #include "Player/ShooterController.h"
 
 
@@ -26,11 +31,10 @@ AShooterCharacter::AShooterCharacter()
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerCamera = FindComponentByClass<UCameraComponent>();
+	
 }
 
-float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
-	class AController* EventInstigator, AActor* DamageCauser)
+float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
@@ -42,6 +46,7 @@ float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 	
 	if (CurrentHealth <= 0)
 	{
+		UGameplayStatics::PlaySound2D(GetWorld(), DeadSound);
 		GetMesh()->SetSimulatePhysics(true);
 		GetMesh()->SetCollisionProfileName("Ragdoll");
 		
@@ -64,26 +69,17 @@ void AShooterCharacter::Tick(float DeltaTime)
 		MakeNoise(1, this, GetActorLocation());
 	}
 
-	// Comprobación de suelo Jumpable
+	// --- Comprobación de suelo Jumpable ---
 	FVector Start = GetActorLocation();
-	FVector End = Start - FVector(0.f, 0.f, 100.f);
+	FVector End = Start - FVector(0.f, 0.f, 100.f); // hacia abajo
 
 	FHitResult Hit;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
-	CanJump = GetWorld()->LineTraceSingleByChannel(
-		Hit,
-		Start,
-		End,
-		ECC_GameTraceChannel2, // Jumpable
-		Params
-	);
+	CanJump = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_GameTraceChannel2, Params);
 
-	if (CanJump && Hit.GetActor())
-	{
-		IsJumping = false;
-	}
+	if (CanJump && Hit.GetActor()) IsJumping = false;
 }
 
 // Called to bind functionality to input
@@ -139,9 +135,9 @@ void AShooterCharacter::Shoot()
 	if (Timer >= TimeBetweenAttacks && CurrentChargerAmmo > 0)
 	{
 		CurrentChargerAmmo--;
-		UE_LOG(LogTemp, Warning, TEXT("%d %d"), CurrentReserveAmmo, CurrentChargerAmmo)
+		UGameplayStatics::PlaySound2D(GetWorld(), ShootSound, 0.5f);
 		auto ShooterController = Cast<AShooterController>(GetController());
-		ShooterController->ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+		ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 		DoShotEffect();
 
 		FVector ViewPointLocation;
@@ -193,7 +189,8 @@ void AShooterCharacter::Recharge()
 	if (IsRecharging) return;
     
 	IsRecharging = true;
-    
+	UGameplayStatics::PlaySound2D(GetWorld(), RechargeSound);
+	
 	FTimerHandle RechargeTimerHandle;
 	GetWorldTimerManager().SetTimer(
 		RechargeTimerHandle,
@@ -207,7 +204,7 @@ void AShooterCharacter::Recharge()
 			IsRecharging = false;
             
 			auto ShooterController = Cast<AShooterController>(GetController());
-			ShooterController->ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+			ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 		},1.5f,false
 	);
 }
@@ -216,6 +213,7 @@ void AShooterCharacter::Jump()
 {
 	if (CanJump)
 	{
+		UGameplayStatics::PlaySound2D(GetWorld(), JumpSound);
 		UE_LOG(LogTemp, Warning, TEXT("Jumping"));
 		LaunchCharacter(FVector(0, 0, 600), false, true);
 		IsJumping = true;
@@ -231,7 +229,7 @@ void AShooterCharacter::Cure(int HPAmount)
 	
 	auto ShooterController = Cast<AShooterController>(GetController());
 	UE_LOG(LogTemp, Warning, TEXT("Vida nueva: %f"), CurrentHealth);
-	ShooterController->ActualizarVidaDesdeFueraPorqueSiNoNoFunciona(CurrentHealth / MaxHealth);
+	ShooterController->ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(CurrentHealth / MaxHealth);
 }
 
 void AShooterCharacter::AddAmmo(int AmmoAmount)
@@ -245,5 +243,5 @@ void AShooterCharacter::AddAmmo(int AmmoAmount)
 	CurrentReserveAmmo += ReserveAmmoAmount;
 
 	auto ShooterController = Cast<AShooterController>(GetController());
-	ShooterController->ActualizarMunicionDesdeFueraPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+	ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 }

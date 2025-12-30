@@ -18,6 +18,9 @@ class SURVIVALSHOOTER_API ASecondEnemyController : public AAIController
 public:
 	ASecondEnemyController();
 	void ChangeEnemyState(uint8 State);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotating")
+	bool bRotating = false;
 	
 protected:
 	virtual void BeginPlay() override;

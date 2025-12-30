@@ -37,17 +37,17 @@ void ASecondEnemy::Tick(float DeltaTime)
 	LastRotation = CurrentRotation;
 
 	ASecondEnemyController* AIController = Cast<ASecondEnemyController>(GetController());
-	if (!AIController) return; // ← Protege si no hay controlador
-
+	if (!AIController) return;
+	UE_LOG(LogTemp, Error, TEXT("%i"), AIController->bRotating);
 	UBlackboardComponent* BBComp = AIController->GetBlackboardComponent();
-	if (!BBComp) return; // ← Protege si no hay blackboard
+	if (!BBComp) return;
 
-	ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(BBComp->GetValueAsEnum("CurrentState"));
+	ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(BBComp->GetValueAsEnum("CurrentState2"));
 
 	if (CurrentState == ESecondEnemyStates::Chase)
 	{
 		AActor* Target = Cast<AActor>(BBComp->GetValueAsObject("Target"));
-		if (!Target) return; // ← Protege si no hay target
+		if (!Target) return;
 
 		FVector Direction = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 		FRotator TargetRot = Direction.Rotation();
@@ -62,19 +62,29 @@ float ASecondEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	Health -= DamageAmount;
+
+	ASecondEnemyController* AIController = Cast<ASecondEnemyController>(GetController());
+	UBlackboardComponent* BBComp = AIController->GetBlackboardComponent();
+	ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(BBComp->GetValueAsEnum("CurrentState2"));
 	
-	if (Health <= 0)
+	if (Health <= 40 && CurrentState != ESecondEnemyStates::Flee)
+	{
+		AIController->ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Flee));
+		int State = BBComp->GetValueAsEnum("CurrentState2");
+		UE_LOG(LogTemp, Warning, TEXT("Vida: %f. Va a huir... estado %d"), Health, State);
+	}
+	else if (Health <= 0)
 	{
 		if (!Muerto) Muerto = true;
 		else return 0;
-		GetMesh()->SetSimulatePhysics(true); //Ahora tengo físicas
-		GetMesh()->SetCollisionProfileName("Ragdoll"); //Me pongo en modo ragdoll
+		GetMesh()->SetSimulatePhysics(true);
+		GetMesh()->SetCollisionProfileName("Ragdoll");
 		if (auto MyController = Cast<ASecondEnemyController>(GetController()))
 		{
 			MyController->GetBrainComponent()->StopLogic("Death");
 			SetLifeSpan(3.0f);
 			AShooterController* A = Cast<AShooterController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-			A->ActualizarKillsDesdeFueraPorqueSiNoNoFunciona();
+			A->ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
 		}
 	}
 	//Puedo retornar ncualquier tipo de float para dar información del golpe al causante del daño.
@@ -108,6 +118,7 @@ void ASecondEnemy::OnAttackHit()
 
 	for (FOverlapResult Result : Results)
 	{
-		UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
+		// Si el enemigo pega a otro enemigo, no ocurre nada
+		if (Result.GetActor()->ActorHasTag("Player")) UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
 	}
 }
