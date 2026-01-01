@@ -16,6 +16,9 @@ ASecondEnemy::ASecondEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 	AttackPoint = CreateDefaultSubobject<USceneComponent>("AttackPoint");
 	AttackPoint->SetupAttachment(RootComponent); //Pongo el empty como hijo del comp. raíz.
+
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 // Called when the game starts or when spawned
@@ -46,11 +49,10 @@ void ASecondEnemy::Tick(float DeltaTime)
 	if (CurrentState == ESecondEnemyStates::Chase)
 	{
 		AActor* Target = Cast<AActor>(BBComp->GetValueAsObject("Target"));
-		if (!Target) return;
+		if (!IsValid(Target)) return;
 
 		FVector Direction = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		FRotator TargetRot = Direction.Rotation();
-		SetActorRotation(TargetRot);
+		SetActorRotation(Direction.Rotation());
 	}
 }
 

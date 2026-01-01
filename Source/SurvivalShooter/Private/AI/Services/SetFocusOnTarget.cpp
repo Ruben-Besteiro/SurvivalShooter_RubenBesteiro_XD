@@ -32,7 +32,9 @@ void USetFocusOnTarget::OnCeaseRelevant(UBehaviorTreeComponent& OwnerComp, uint8
 	Super::OnCeaseRelevant(OwnerComp, NodeMemory);
 
 	AAIController* Controller = OwnerComp.GetAIOwner();
+	if (!IsValid(Controller)) return;
 	ABaseEnemy* Enemy = Cast<ABaseEnemy>(Controller->GetPawn());
+	if (!IsValid(Enemy)) return;
 	Controller->ClearFocus(EAIFocusPriority::Gameplay);
 	Enemy->SetIsStrafing(false);
 }

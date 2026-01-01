@@ -56,5 +56,10 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 void ASecondEnemyController::ChangeEnemyState(uint8 State)
 {
     GetBlackboardComponent()->SetValueAsEnum("CurrentState2", State);
+    if (State == static_cast<uint8>(ESecondEnemyStates::Flee))
+    {
+        ClearFocus(EAIFocusPriority::Gameplay);
+        GetBlackboardComponent()->ClearValue("Target");
+    }
     bRotating = false;
 }
