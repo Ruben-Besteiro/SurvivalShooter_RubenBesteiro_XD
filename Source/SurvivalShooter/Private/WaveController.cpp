@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Player/ShooterController.h"
+#include "Blueprint/UserWidget.h"
 
 // Sets default values
 AWaveController::AWaveController()
@@ -39,7 +40,7 @@ void AWaveController::Tick(float DeltaTime)
 		int Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);
 
 		// Esto es cuando el jugador gana la primera oleada (ya no aparecen más enemigos)
-		if (!Wave2 && Cast<AShooterController>(Player->Controller)->Kills >= 1)
+		if (!Wave2 && Cast<AShooterController>(Player->Controller)->Kills >= 15)
 		{
 			IsInIntermission = true;
 			UGameplayStatics::PlaySound2D(GetWorld(), VictoryRoyale);
@@ -47,14 +48,24 @@ void AWaveController::Tick(float DeltaTime)
 			// Destruimos todos los enemigos y powerups
 			TArray<AActor*> FoundActors;
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), FoundActors);
+			for (AActor* Actor : FoundActors) Actor->Destroy();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASecondEnemy::StaticClass(), FoundActors);
+			for (AActor* Actor : FoundActors) Actor->Destroy();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUp::StaticClass(), FoundActors);
 			for (AActor* Actor : FoundActors) Actor->Destroy();
-			
-			IsInIntermission = false;
-			Wave2 = true;
+
+			GGWidget->AddToViewport();
+
+			// Dejamos un descansito
+			FTimerHandle Wave2TimerHandle;
+			GetWorldTimerManager().SetTimer(Wave2TimerHandle, [this]()
+			{
+				IsInIntermission = false;
+				Wave2 = true;
+			}, IntermissionSeconds, false);
 		}
 
+		// En la oleada 1, spawneamos enemigos y powerups más rápido según cuántas kills llevemos
 		if (!Wave2)
 		{
 			if (Counter >= Interval)

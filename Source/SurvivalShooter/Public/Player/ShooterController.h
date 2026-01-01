@@ -29,6 +29,7 @@ public:
 	void UpdateKills(int K);
 
 	int Kills = 0;
+	bool IsDead = false;
 	
 	void ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo);
 	void ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e);

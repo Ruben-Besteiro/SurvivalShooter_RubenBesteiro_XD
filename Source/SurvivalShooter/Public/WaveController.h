@@ -21,6 +21,9 @@ public:
 	// Sets default values for this actor's properties
 	AWaveController();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int IntermissionSeconds = 5;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -55,6 +58,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	USoundBase* VictoryRoyale;
 
+	UPROPERTY(EditAnywhere)
+	UUserWidget* GGWidget;
+
 	// Contadores para spawnear enemigos
 	float Counter = 0;
 	float Counter2 = -2;
@@ -69,6 +75,5 @@ private:
 
 	bool Wave2 = false;
 	bool IsInIntermission = false;
-
-	int Wave2MaxPerType = 50;
+	int Wave2MaxPerType = 30;
 };

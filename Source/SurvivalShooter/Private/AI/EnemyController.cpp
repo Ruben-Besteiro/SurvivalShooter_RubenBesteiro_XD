@@ -56,11 +56,11 @@ void AEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
 	//Si escucho algo y no estoy persiguiendo.
 	else if (SenseType == UAISense_Hearing::StaticClass() && CurrentState != EEnemyStates::Chase)
 	{
-		// if (Stimulus.WasSuccessfullySensed())
-		// {
-		// 	GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
-		// 	ChangeState(static_cast<uint8>(EEnemyStates::Investigate));
-		// }
+		if (Stimulus.WasSuccessfullySensed())
+		{
+			GetBlackboardComponent()->SetValueAsVector("PointOfInterest", Stimulus.StimulusLocation);
+			ChangeEnemyState(static_cast<uint8>(EEnemyStates::Investigate));
+		}
 	}
 	else if (SenseType == UAISense_Damage::StaticClass() && CurrentState != EEnemyStates::Chase)
 	{

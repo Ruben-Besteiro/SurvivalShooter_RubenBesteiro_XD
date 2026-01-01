@@ -34,6 +34,8 @@ void AShooterCharacter::BeginPlay()
 
 float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
+	// Si la vida era 0 o menos antes de recibir el golpe, no ocurre nada
+	if (CurrentHealth <= 0) return 0;
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	auto ShooterController = Cast<AShooterController>(GetController());
@@ -44,6 +46,7 @@ float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 	
 	if (CurrentHealth <= 0)
 	{
+		Cast<AShooterController>(Controller)->IsDead = true;
 		UGameplayStatics::PlaySound2D(GetWorld(), DeadSound);
 		GetMesh()->SetSimulatePhysics(true);
 		GetMesh()->SetCollisionProfileName("Ragdoll");
@@ -63,7 +66,7 @@ void AShooterCharacter::Tick(float DeltaTime)
 
 	if (GetVelocity().Length() >= NoiseThreshold)
 	{
-		MakeNoise(1, this, GetActorLocation());
+		MakeNoise(0.1f, this, GetActorLocation());
 	}
 
 	// Comprobación de suelo Jumpable
@@ -141,7 +144,9 @@ void AShooterCharacter::Shoot()
 		UGameplayStatics::PlaySound2D(GetWorld(), ShootSound, 0.3f);
 		auto ShooterController = Cast<AShooterController>(GetController());
 		ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+		
 		DoShotEffect();
+		MakeNoise(0.5f, this, GetActorLocation());
 
 		FVector ViewPointLocation;
 		FRotator ViewPointRotation;
@@ -266,37 +271,36 @@ void AShooterCharacter::AddAmmo(int AmmoAmount)
 void AShooterCharacter::ApplyBerserkEffect(int Seconds)
 {
 	UCameraComponent* Camera = FindComponentByClass<UCameraComponent>();
-	if (!Camera) return;
 
-	// Guardamos el postprocess original (solo la primera vez)
-	OGPostProcess = Camera->PostProcessSettings;
-	FPostProcessSettings& PPS = Camera->PostProcessSettings;
+	// Si ya hay berserk activo, solo reiniciamos el timer
+	if (!IsBerserkActive)
+	{
+		IsBerserkActive = true;
+		OGPostProcess = Camera->PostProcessSettings;
+		OGTimeBetweenAttacks = TimeBetweenAttacks;
+		OGMoveSpeed = GetCharacterMovement()->MaxWalkSpeed;
 
-	// Tinte verde para simular como si el jugador estuviese drogado
-	PPS.bOverride_ColorGain = true;
-	PPS.ColorGain = FVector4(0, 1, 0, 1);
+		// Tinte verde para simular que el jugador está drogado
+		FPostProcessSettings& PPS = Camera->PostProcessSettings;
+		PPS.bOverride_ColorGain = true;
+		PPS.ColorGain = FVector4(0, 1, 0, 1);
+		PPS.bOverride_ColorSaturation = true;
+		PPS.ColorSaturation = FVector4(1, 2, 1, 1);
+		PPS.bOverride_ColorContrast = true;
+		PPS.ColorContrast = FVector4(2, 2, 2, 1);
 
-	PPS.bOverride_ColorSaturation = true;
-	PPS.ColorSaturation = FVector4(1, 2, 1, 1);
+		TimeBetweenAttacks = 0.066f;
+		GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed * 2;
+	}
 
-	PPS.bOverride_ColorContrast = true;
-	PPS.ColorContrast = FVector4(2, 2, 2, 1);
+	// Borramos el timer en caso de haberlo y lo volvemos a iniciar
+	GetWorldTimerManager().ClearTimer(BerserkTimerHandle);
 
-	OGTimeBetweenAttacks = TimeBetweenAttacks;
-	OGMoveSpeed = GetCharacterMovement()->MaxWalkSpeed;
-	TimeBetweenAttacks = 0.066f;
-	GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed * 2;
-
-	FTimerHandle BerserkTimerHandle;
-	GetWorldTimerManager().SetTimer(
-		BerserkTimerHandle,
-		[this, Camera]()
-		{
-			if (!IsValid(Camera)) return;
-			Camera->PostProcessSettings = OGPostProcess;
-			TimeBetweenAttacks = OGTimeBetweenAttacks;
-			GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed;
-		},Seconds,false
-		);
+	GetWorldTimerManager().SetTimer(BerserkTimerHandle,[this, Camera]()
+	{
+		Camera->PostProcessSettings = OGPostProcess;
+		TimeBetweenAttacks = OGTimeBetweenAttacks;
+		GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed;
+		IsBerserkActive = false;
+	},Seconds,false);
 }
-

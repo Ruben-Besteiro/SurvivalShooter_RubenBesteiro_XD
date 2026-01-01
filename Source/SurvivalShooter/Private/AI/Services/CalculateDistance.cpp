@@ -29,7 +29,7 @@ void UCalculateDistance::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* Node
 		if (DistanceToTarget > MinDistanceForStrafing)		// Si la distancia es superior a la mínima en vez de hacer strafe se pone a correr
 		{
 			MyPawn->SetIsStrafing(false);
-			MyController->ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
+			MyController->ChangeEnemyState(static_cast<uint8>(EEnemyStates::Chase));
 		}
 	}
 }

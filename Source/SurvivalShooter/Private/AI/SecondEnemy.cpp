@@ -117,6 +117,7 @@ void ASecondEnemy::OnAttackHit()
 
 	for (FOverlapResult Result : Results)
 	{
+		if (!IsValid(Result.GetActor())) continue;
 		// Si el enemigo pega a otro enemigo, no ocurre nada
 		if (Result.GetActor()->ActorHasTag("Player")) UGameplayStatics::ApplyDamage(Result.GetActor(), BaseDamage, GetController(), this, UDamageType::StaticClass());
 	}

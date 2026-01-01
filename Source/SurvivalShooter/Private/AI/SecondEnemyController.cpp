@@ -35,17 +35,13 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
     // Si el enemigo está huyendo, deja de sentir cosas
     if (CurrentState == ESecondEnemyStates::Flee) return;
     
-    if (SenseType == UAISense_Sight::StaticClass())
+    if (SenseType == UAISense_Sight::StaticClass() || SenseType == UAISense_Hearing::StaticClass())
     {
         if (Stimulus.WasSuccessfullySensed())
         {
             GetBlackboardComponent()->SetValueAsObject("Target", Actor);
             ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Chase));
         }
-    }
-    else if (SenseType == UAISense_Hearing::StaticClass())
-    {
-        // Nada...
     }
     else if (SenseType == UAISense_Damage::StaticClass())
     {

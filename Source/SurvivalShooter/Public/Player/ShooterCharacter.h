@@ -84,6 +84,9 @@ private:
 
 	int CurrentChargerAmmo;
 
+	FTimerHandle BerserkTimerHandle;
+	bool IsBerserkActive = false;
+
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float JumpForce;
 

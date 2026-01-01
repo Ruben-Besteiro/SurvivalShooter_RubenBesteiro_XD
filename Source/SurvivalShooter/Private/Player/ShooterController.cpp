@@ -119,17 +119,19 @@ void AShooterController::OnMusicFinished()
 
 void AShooterController::ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo)
 {
-	if (!IsValid(GetPawn())) return;
+	if (!IsValid(GetPawn()) || IsDead) return;
 	UpdateAmmo(CurrentReserveAmmo, CurrentChargerAmmo);
 }
 
 void AShooterController::ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e)
 {
+	if (!IsValid(GetPawn()) || IsDead) return;
 	UpdateHealth(e);
 }
 
 void AShooterController::ActualizarKillsDesdeAquiPorqueSiNoNoFunciona()
 {
+	if (!IsValid(GetPawn()) || IsDead) return;
 	Kills++;
 	UpdateKills(Kills);
 }
