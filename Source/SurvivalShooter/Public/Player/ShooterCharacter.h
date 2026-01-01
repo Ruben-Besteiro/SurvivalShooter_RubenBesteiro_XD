@@ -21,7 +21,6 @@ public:
 	void Cure(int HPAmount);
 	void AddAmmo(int AmmoAmount);
 	void ApplyBerserkEffect(int Seconds);
-	void UnapplyBerserkEffect();
 
 protected:
 	// Called when the game starts or when spawned
@@ -54,6 +53,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Inputs")
 	UInputAction* JumpAction;
 
+	UPROPERTY(EditAnywhere, Category = "Inputs")
+	UInputAction* AimAction;
+
 	UPROPERTY(EditAnywhere, Category= "Effects")
 	UParticleSystem* ShootParticles;
 
@@ -70,7 +72,7 @@ private:
 	float BaseDamage = 20;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
-	float MaxHealth = 100;
+	float MaxHealth = 200;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	int MaxReserveAmmo = 500;
@@ -78,9 +80,12 @@ private:
 	int CurrentReserveAmmo;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
-	int MaxChargerAmmo = 20;
+	int MaxChargerAmmo = 50;
 
 	int CurrentChargerAmmo;
+
+	UPROPERTY(EditAnywhere, Category= "Stats")
+	float JumpForce;
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float NoiseThreshold = 400;
@@ -96,6 +101,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category= "Sounds")
 	USoundBase* DeadSound;
+
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* JumpMontage;
 	
 	float Timer;
 
@@ -104,12 +112,11 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	bool IsRecharging;
 
-	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	bool IsJumping;
-
 	FPostProcessSettings OGPostProcess;
 	float OGTimeBetweenAttacks;
 	float OGMoveSpeed;
+	float OGSpringArmLength;
+	bool Zooming;
 
 	void Move(const FInputActionValue& InputActionValue);
 	void Look(const FInputActionValue& InputActionValue);
@@ -117,4 +124,6 @@ private:
 	void Shoot();
 	void Recharge();
 	void Jump();
+	void Aim();
+	void DontAim();
 };

@@ -10,22 +10,38 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "BrainComponent.h"
-#include "GameFramework/GameModeBase.h"
 #include "Components/AudioComponent.h"
+#include "EngineUtils.h"
 
 // Cuando muere el jugador, hacemos que los enemigos salgan volando
 void AShooterController::PawnDead()
 {
+	DeadWidget->AddToViewport();
 	MusicComponent->Stop();
+	
 	APawn* MyPawn = GetPawn();
 	if (MyPawn)
 	{
-		MyPawn->SetLifeSpan(3.0f); // destruye el jugador tras 3 seg
+		// Por la razón que sea no me deja asignar el WaveController desde el blueprint, así que lo busco desde el código
+		if (!WaveController)
+		{
+			for (TActorIterator<AWaveController> It(GetWorld()); It;)
+			{
+				WaveController = *It;
+				break;
+			}
+		}
+		WaveController->PlayerIsAlive = false;
+		WaveController->ReduceInterval();
+		
 		UnPossess();
 	}
 
+	bShowMouseCursor = true;
+	bEnableClickEvents = true;
+	bEnableMouseOverEvents = true;
+
 	UWorld* World = GetWorld();
-	if (!World) return;
 	
 	TArray<AActor*> Enemies;
 	UGameplayStatics::GetAllActorsOfClass(World, ABaseEnemy::StaticClass(), Enemies);
@@ -55,7 +71,7 @@ void AShooterController::PawnDead()
 				// Vector random unitario multiplicado por fuerza
 				FVector RandomImpulse = FVector(FMath::FRandRange(-1.f,1.f), 
 												FMath::FRandRange(-1.f,1.f), 
-												FMath::FRandRange(0.5f,1.f)).GetSafeNormal() * 1500.f;
+												FMath::FRandRange(0.5f,1.f)).GetSafeNormal() * 1500;
 
 				Mesh->AddImpulse(RandomImpulse, NAME_None, true);
 			}
@@ -115,12 +131,11 @@ void AShooterController::ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e)
 void AShooterController::ActualizarKillsDesdeAquiPorqueSiNoNoFunciona()
 {
 	Kills++;
-	UE_LOG(LogTemp, Log, TEXT("Matates al enemigo"));
 	UpdateKills(Kills);
 }
 
 void AShooterController::DestroyDelayed()
 {
-	//Aviso al GameMode de que me reseteen.
-	GetWorld()->GetAuthGameMode()->RestartPlayer(this);
+	// No hay reset automático
+	//GetWorld()->GetAuthGameMode()->RestartPlayer(this);
 }

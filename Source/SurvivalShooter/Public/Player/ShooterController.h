@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ShooterCharacter.h"
+#include "WaveController.h"
 #include "GameFramework/PlayerController.h"
 #include "ShooterController.generated.h"
 
@@ -57,6 +58,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Music");
 	USoundBase* Music;
+
+	UPROPERTY(EditAnywhere, Category = "W");
+	UUserWidget* DeadWidget;
+
+	UPROPERTY(EditAnywhere, Category = "Ñ")
+	AWaveController* WaveController;
 
 	FTimerHandle TimerHandle;
 	void DestroyDelayed();

@@ -3,12 +3,9 @@
 #include "Player/ShooterCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Perception/AIPerceptionSystem.h"
-#include "Perception/AISenseEvent.h"
 #include "Perception/AISense_Damage.h"
-#include "Perception/AISense_Damage.h"
-#include "Physics/ImmediatePhysics/ImmediatePhysicsShared/ImmediatePhysicsCore.h"
 #include "Player/ShooterController.h"
 
 
@@ -31,7 +28,8 @@ AShooterCharacter::AShooterCharacter()
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	USpringArmComponent* SA = FindComponentByClass<USpringArmComponent>();
+	OGSpringArmLength = SA->TargetArmLength;
 }
 
 float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
@@ -52,7 +50,6 @@ float AShooterCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 		
 		//Comunico al controlador que hemos muerto
 		ShooterController->PawnDead();
-		Destroy();
 	}
 	return CurrentHealth;
 }
@@ -69,9 +66,9 @@ void AShooterCharacter::Tick(float DeltaTime)
 		MakeNoise(1, this, GetActorLocation());
 	}
 
-	// --- Comprobación de suelo Jumpable ---
+	// Comprobación de suelo Jumpable
 	FVector Start = GetActorLocation();
-	FVector End = Start - FVector(0.f, 0.f, 100.f); // hacia abajo
+	FVector End = Start - FVector(0, 0, 100);
 
 	FHitResult Hit;
 	FCollisionQueryParams Params;
@@ -79,7 +76,11 @@ void AShooterCharacter::Tick(float DeltaTime)
 
 	CanJump = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_GameTraceChannel2, Params);
 
-	if (CanJump && Hit.GetActor()) IsJumping = false;
+	// AQUÍ SE HACE LA ACCIÓN DE APUNTAR
+	USpringArmComponent* SA = FindComponentByClass<USpringArmComponent>();
+	float ZoomedSpringArmLength = OGSpringArmLength / 10;
+	float NewTargetArmLength = Zooming ? ZoomedSpringArmLength : OGSpringArmLength;
+	SA->TargetArmLength = FMath::FInterpTo(SA->TargetArmLength, NewTargetArmLength, DeltaTime, 15);
 }
 
 // Called to bind functionality to input
@@ -92,6 +93,8 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	Input->BindAction(ShootAction, ETriggerEvent::Triggered, this, &AShooterCharacter::Shoot);
 	Input->BindAction(RechargeAction, ETriggerEvent::Started, this, &AShooterCharacter::Recharge);
 	Input->BindAction(JumpAction, ETriggerEvent::Started, this, &AShooterCharacter::Jump);
+	Input->BindAction(AimAction, ETriggerEvent::Started, this, &AShooterCharacter::Aim);
+	Input->BindAction(AimAction, ETriggerEvent::Completed, this, &AShooterCharacter::DontAim);
 }
 
 void AShooterCharacter::Move(const FInputActionValue& InputActionValue)
@@ -135,7 +138,7 @@ void AShooterCharacter::Shoot()
 	if (Timer >= TimeBetweenAttacks && CurrentChargerAmmo > 0)
 	{
 		CurrentChargerAmmo--;
-		UGameplayStatics::PlaySound2D(GetWorld(), ShootSound, 0.5f);
+		UGameplayStatics::PlaySound2D(GetWorld(), ShootSound, 0.3f);
 		auto ShooterController = Cast<AShooterController>(GetController());
 		ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
 		DoShotEffect();
@@ -211,15 +214,29 @@ void AShooterCharacter::Recharge()
 
 void AShooterCharacter::Jump()
 {
-	if (CanJump)
-	{
-		UGameplayStatics::PlaySound2D(GetWorld(), JumpSound);
-		UE_LOG(LogTemp, Warning, TEXT("Jumping"));
-		LaunchCharacter(FVector(0, 0, 600), false, true);
-		IsJumping = true;
-		CanJump = false;
-	}
+	if (!CanJump) return;
+	
+	UGameplayStatics::PlaySound2D(GetWorld(), JumpSound, 0.5f);
+	
+	PlayAnimMontage(JumpMontage);
+	UE_LOG(LogTemp,Error,TEXT("%f"), PlayAnimMontage(JumpMontage));
+	
+	LaunchCharacter(FVector(0, 0, JumpForce), false, true);
+	CanJump = false;
 }
+
+void AShooterCharacter::Aim()
+{
+	Zooming = true;
+	UE_LOG(LogTemp,Error,TEXT("%d"), Zooming);
+}
+
+void AShooterCharacter::DontAim()
+{
+	Zooming = false;
+	UE_LOG(LogTemp,Error,TEXT("%d"), Zooming);
+}
+
 
 void AShooterCharacter::Cure(int HPAmount)
 {
