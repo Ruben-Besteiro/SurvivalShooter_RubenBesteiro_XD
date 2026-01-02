@@ -39,32 +39,6 @@ void AWaveController::Tick(float DeltaTime)
 		int Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
 		int Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);
 
-		// Esto es cuando el jugador gana la primera oleada (ya no aparecen más enemigos)
-		if (!Wave2 && Cast<AShooterController>(Player->Controller)->Kills >= 15)
-		{
-			IsInIntermission = true;
-			UGameplayStatics::PlaySound2D(GetWorld(), VictoryRoyale);
-
-			// Destruimos todos los enemigos y powerups
-			TArray<AActor*> FoundActors;
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), FoundActors);
-			for (AActor* Actor : FoundActors) Actor->Destroy();
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASecondEnemy::StaticClass(), FoundActors);
-			for (AActor* Actor : FoundActors) Actor->Destroy();
-			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUp::StaticClass(), FoundActors);
-			for (AActor* Actor : FoundActors) Actor->Destroy();
-
-			GGWidget->AddToViewport();
-
-			// Dejamos un descansito
-			FTimerHandle Wave2TimerHandle;
-			GetWorldTimerManager().SetTimer(Wave2TimerHandle, [this]()
-			{
-				IsInIntermission = false;
-				Wave2 = true;
-			}, IntermissionSeconds, false);
-		}
-
 		// En la oleada 1, spawneamos enemigos y powerups más rápido según cuántas kills llevemos
 		if (!Wave2)
 		{
@@ -98,14 +72,45 @@ void AWaveController::Tick(float DeltaTime)
 			}
 		}
 
-		// En la oleada 2, spawneamos 20 de cada enemigo y 20 de cada powerup instantáneamente, y siempre habrá esa cantidad en el mapa
+		// Esto es cuando el jugador gana la primera oleada (ya no aparecen más enemigos)
+		if (!Wave2 && Cast<AShooterController>(Player->Controller)->Kills >= 15)
+		{
+			IsInIntermission = true;
+			UGameplayStatics::PlaySound2D(GetWorld(), VictoryRoyale);
+
+			// Destruimos todos los enemigos y powerups
+			TArray<AActor*> FoundActors;
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), FoundActors);
+			for (AActor* Actor : FoundActors) Actor->Destroy();
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASecondEnemy::StaticClass(), FoundActors);
+			for (AActor* Actor : FoundActors) Actor->Destroy();
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUp::StaticClass(), FoundActors);
+			for (AActor* Actor : FoundActors) Actor->Destroy();
+
+			GGWidget->AddToViewport();
+			Player->CurrentHealth = Player->MaxHealth;
+			Cast<AShooterController>(Player->Controller)->UpdateHealthPublic(Player->CurrentHealth);
+			if (Player->CurrentReserveAmmo < Player->MaxReserveAmmo) Player->CurrentReserveAmmo = Player->MaxReserveAmmo;
+			Player->CurrentChargerAmmo = Player->MaxChargerAmmo;
+			Cast<AShooterController>(Player->Controller)->UpdateAmmoPublic(Player->MaxReserveAmmo, Player->MaxChargerAmmo);
+
+			// Dejamos un descansito
+			FTimerHandle Wave2TimerHandle;
+			GetWorldTimerManager().SetTimer(Wave2TimerHandle, [this]()
+			{
+				IsInIntermission = false;
+				Wave2 = true;
+			}, IntermissionSeconds, false);
+		}
+
+		// En la oleada 2, spawneamos 30 de cada enemigo y 30 de cada powerup instantáneamente, y siempre habrá esa cantidad en el mapa
 		if (Wave2)
 		{
 			TArray<AActor*> FoundStuff;
 			
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemy::StaticClass(), FoundStuff);
-			int32 Missing = Wave2MaxPerType - FoundStuff.Num();
-			for (int32 i = 0; i < Missing; i++)
+			int Missing = Wave2MaxPerType - FoundStuff.Num();
+			for (int i = 0; i < Missing; i++)
 			{
 				// Hay que regenerar Rand y Rand2 para que no salgan todos los enemigos en el mismo sitio
 				Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
@@ -116,7 +121,7 @@ void AWaveController::Tick(float DeltaTime)
 			FoundStuff.Reset();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASecondEnemy::StaticClass(), FoundStuff);
 			Missing = Wave2MaxPerType - FoundStuff.Num();
-			for (int32 i = 0; i < Missing; i++)
+			for (int i = 0; i < Missing; i++)
 			{
 				Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
 				Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);
@@ -126,7 +131,7 @@ void AWaveController::Tick(float DeltaTime)
 			FoundStuff.Reset();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUpHealth2::StaticClass(), FoundStuff);
 			Missing = Wave2MaxPerType - FoundStuff.Num();
-			for (int32 i = 0; i < Missing; i++)
+			for (int i = 0; i < Missing; i++)
 			{
 				Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
 				Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);
@@ -136,7 +141,7 @@ void AWaveController::Tick(float DeltaTime)
 			FoundStuff.Reset();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUpAmmo::StaticClass(), FoundStuff);
 			Missing = Wave2MaxPerType - FoundStuff.Num();
-			for (int32 i = 0; i < Missing; i++)
+			for (int i = 0; i < Missing; i++)
 			{
 				Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
 				Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);
@@ -146,7 +151,7 @@ void AWaveController::Tick(float DeltaTime)
 			FoundStuff.Reset();
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), APowerUpBerserk::StaticClass(), FoundStuff);
 			Missing = Wave2MaxPerType - FoundStuff.Num();
-			for (int32 i = 0; i < Missing; i++)
+			for (int i = 0; i < Missing; i++)
 			{
 				Rand = UKismetMathLibrary::RandomIntegerInRange(-1500, 5500);
 				Rand2 = UKismetMathLibrary::RandomIntegerInRange(-5500, 1500);

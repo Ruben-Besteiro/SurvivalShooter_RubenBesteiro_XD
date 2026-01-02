@@ -37,6 +37,19 @@ public:
 
 	float CurrentHealth;
 
+	UPROPERTY(EditAnywhere, Category= "Stats")
+	float MaxHealth = 200;
+
+	UPROPERTY(EditAnywhere, Category= "Stats")
+	int MaxReserveAmmo = 500;
+
+	int CurrentReserveAmmo;
+
+	UPROPERTY(EditAnywhere, Category= "Stats")
+	int MaxChargerAmmo = 50;
+
+	int CurrentChargerAmmo;
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Inputs")
 	UInputAction* MoveAction;
@@ -70,19 +83,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category= "Stats")
 	float BaseDamage = 20;
-
-	UPROPERTY(EditAnywhere, Category= "Stats")
-	float MaxHealth = 200;
-
-	UPROPERTY(EditAnywhere, Category= "Stats")
-	int MaxReserveAmmo = 500;
-
-	int CurrentReserveAmmo;
-
-	UPROPERTY(EditAnywhere, Category= "Stats")
-	int MaxChargerAmmo = 50;
-
-	int CurrentChargerAmmo;
 
 	FTimerHandle BerserkTimerHandle;
 	bool IsBerserkActive = false;

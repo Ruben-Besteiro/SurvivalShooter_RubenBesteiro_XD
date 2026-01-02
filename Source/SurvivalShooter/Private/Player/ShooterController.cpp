@@ -13,78 +13,6 @@
 #include "Components/AudioComponent.h"
 #include "EngineUtils.h"
 
-// Cuando muere el jugador, hacemos que los enemigos salgan volando
-void AShooterController::PawnDead()
-{
-	DeadWidget->AddToViewport();
-	MusicComponent->Stop();
-	
-	APawn* MyPawn = GetPawn();
-	if (MyPawn)
-	{
-		// Por la razón que sea no me deja asignar el WaveController desde el blueprint, así que lo busco desde el código
-		if (!WaveController)
-		{
-			for (TActorIterator<AWaveController> It(GetWorld()); It;)
-			{
-				WaveController = *It;
-				break;
-			}
-		}
-		WaveController->PlayerIsAlive = false;
-		WaveController->ReduceInterval();
-		
-		UnPossess();
-	}
-
-	bShowMouseCursor = true;
-	bEnableClickEvents = true;
-	bEnableMouseOverEvents = true;
-
-	UWorld* World = GetWorld();
-	
-	TArray<AActor*> Enemies;
-	UGameplayStatics::GetAllActorsOfClass(World, ABaseEnemy::StaticClass(), Enemies);
-
-	TArray<AActor*> SecondFound;
-	UGameplayStatics::GetAllActorsOfClass(World, ASecondEnemy::StaticClass(), SecondFound);
-	Enemies.Append(SecondFound);
-
-	for (AActor* Actor : Enemies)
-	{
-		if (APawn* EnemyPawn = Cast<APawn>(Actor))
-		{
-			if (AAIController* AICon = Cast<AAIController>(EnemyPawn->GetController()))
-			{
-				if (UBrainComponent* Brain = AICon->GetBrainComponent())
-				{
-					Brain->StopLogic("PlayerDead");
-				}
-				AICon->UnPossess();
-			}
-			
-			if (USkeletalMeshComponent* Mesh = EnemyPawn->FindComponentByClass<USkeletalMeshComponent>())
-			{
-				Mesh->SetSimulatePhysics(true);
-				Mesh->SetCollisionProfileName("Ragdoll");
-
-				// Vector random unitario multiplicado por fuerza
-				FVector RandomImpulse = FVector(FMath::FRandRange(-1.f,1.f), 
-												FMath::FRandRange(-1.f,1.f), 
-												FMath::FRandRange(0.5f,1.f)).GetSafeNormal() * 1500;
-
-				Mesh->AddImpulse(RandomImpulse, NAME_None, true);
-			}
-
-			EnemyPawn->SetLifeSpan(5.f);
-		}
-	}
-	
-	World->GetTimerManager().SetTimer(TimerHandle, this, &AShooterController::DestroyDelayed, 3.0f, false);
-}
-
-
-
 void AShooterController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -117,27 +45,87 @@ void AShooterController::OnMusicFinished()
 	if (Cast<AShooterCharacter>(GetPawn())->CurrentHealth > 0) MusicComponent->Play();		// En game over es mejor que se calle
 }
 
-void AShooterController::ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo)
+void AShooterController::UpdateAmmoPublic(int CurrentReserveAmmo, int CurrentChargerAmmo)
 {
 	if (!IsValid(GetPawn()) || IsDead) return;
 	UpdateAmmo(CurrentReserveAmmo, CurrentChargerAmmo);
 }
 
-void AShooterController::ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e)
+void AShooterController::UpdateHealthPublic(float e)
 {
 	if (!IsValid(GetPawn()) || IsDead) return;
 	UpdateHealth(e);
 }
 
-void AShooterController::ActualizarKillsDesdeAquiPorqueSiNoNoFunciona()
+void AShooterController::UpdateKillsPublic()
 {
 	if (!IsValid(GetPawn()) || IsDead) return;
 	Kills++;
 	UpdateKills(Kills);
 }
 
-void AShooterController::DestroyDelayed()
+// Cuando muere el jugador, hacemos que los enemigos salgan volando
+void AShooterController::PawnDead()
 {
-	// No hay reset automático
-	//GetWorld()->GetAuthGameMode()->RestartPlayer(this);
+	DeadWidget->AddToViewport();
+	bShowMouseCursor = true;
+	bEnableClickEvents = true;
+	bEnableMouseOverEvents = true;
+	
+	MusicComponent->Stop();
+	
+	APawn* MyPawn = GetPawn();
+	if (MyPawn)
+	{
+		// Por la razón que sea no me deja asignar el WaveController desde el blueprint, así que lo busco desde el código
+		if (!WaveController)
+		{
+			for (TActorIterator<AWaveController> It(GetWorld()); It;)
+			{
+				WaveController = *It;
+				break;
+			}
+		}
+		WaveController->PlayerIsAlive = false;
+		UnPossess();
+	}
+	
+	UWorld* World = GetWorld();
+	
+	TArray<AActor*> Enemies;
+	UGameplayStatics::GetAllActorsOfClass(World, ABaseEnemy::StaticClass(), Enemies);
+
+	TArray<AActor*> SecondEnemies;
+	UGameplayStatics::GetAllActorsOfClass(World, ASecondEnemy::StaticClass(), SecondEnemies);
+	Enemies.Append(SecondEnemies);
+
+	for (AActor* Actor : Enemies)
+	{
+		if (APawn* EnemyPawn = Cast<APawn>(Actor))
+		{
+			if (AAIController* AICon = Cast<AAIController>(EnemyPawn->GetController()))
+			{
+				if (UBrainComponent* Brain = AICon->GetBrainComponent())
+				{
+					Brain->StopLogic("C Murió XD");
+				}
+				AICon->UnPossess();
+			}
+			
+			if (USkeletalMeshComponent* Mesh = EnemyPawn->FindComponentByClass<USkeletalMeshComponent>())
+			{
+				Mesh->SetSimulatePhysics(true);
+				Mesh->SetCollisionProfileName("Ragdoll");
+
+				// Vector random unitario multiplicado por fuerza
+				FVector RandomImpulse = FVector(FMath::FRandRange(-1.f,1.f), 
+												FMath::FRandRange(-1.f,1.f), 
+												FMath::FRandRange(0.5f,1.f)).GetSafeNormal() * 1500;
+
+				Mesh->AddImpulse(RandomImpulse, NAME_None, true);
+			}
+
+			EnemyPawn->SetLifeSpan(5.f);
+		}
+	}
 }

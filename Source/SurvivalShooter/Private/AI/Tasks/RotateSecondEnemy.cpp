@@ -12,8 +12,8 @@
 
 URotateSecondEnemy::URotateSecondEnemy()
 {
-    bNotifyTick = true;   // Permite usar TickTask
-    RotationSpeed = 180; // grados por segundo
+    bNotifyTick = true;     // Permite usar TickTask
+    RotationSpeed = 180;    // Grados por segundo
 }
 
 EBTNodeResult::Type URotateSecondEnemy::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -23,9 +23,9 @@ EBTNodeResult::Type URotateSecondEnemy::ExecuteTask(UBehaviorTreeComponent& Owne
     FRotator CurrentRot = Pawn->GetActorRotation();
     
     float RandomYaw = FMath::FRandRange(90.f, 180.f);
-    if (FMath::RandBool()) RandomYaw *= -1.f;
+    if (FMath::RandBool()) RandomYaw *= -1;
 
-    TargetRotation = CurrentRot + FRotator(0.f, RandomYaw, 0.f);
+    TargetRotation = CurrentRot + FRotator(0, RandomYaw, 0);
     TargetRotation.Normalize();
     Cast<ASecondEnemyController>(AICon)->bRotating = true;
 
@@ -43,7 +43,6 @@ void URotateSecondEnemy::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     if(CurrentState == static_cast<uint8>(ESecondEnemyStates::Chase))
     {
         // Si cambió a chase, terminamos la tarea
-        UE_LOG(LogTemp, Warning, TEXT("Enemigo cambió a chase"));
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
         return;
     }
@@ -54,16 +53,9 @@ void URotateSecondEnemy::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
 
     Pawn->SetActorRotation(NewRot);
 
-    LogRotationDebug(Pawn);
-
-    if (NewRot.Equals(TargetRotation, 1.f))
+    if (NewRot.Equals(TargetRotation, 1))
     {
         Cast<ASecondEnemyController>(AICon)->bRotating = true;
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }
-}
-
-void URotateSecondEnemy::LogRotationDebug(AActor* Pawn)
-{
-    FRotator ActorRot = Pawn->GetActorRotation();
 }

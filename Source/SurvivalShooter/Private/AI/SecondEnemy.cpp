@@ -16,16 +16,12 @@ ASecondEnemy::ASecondEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 	AttackPoint = CreateDefaultSubobject<USceneComponent>("AttackPoint");
 	AttackPoint->SetupAttachment(RootComponent); //Pongo el empty como hijo del comp. raíz.
-
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 // Called when the game starts or when spawned
 void ASecondEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Log, TEXT("Hola desde el enemigo"));
 	LastRotation = GetActorRotation();
 }
 
@@ -38,22 +34,6 @@ void ASecondEnemy::Tick(float DeltaTime)
 	FRotator DeltaRotation = (CurrentRotation - LastRotation).GetNormalized();
 	RotationSpeed = DeltaRotation.Yaw / DeltaTime;
 	LastRotation = CurrentRotation;
-
-	ASecondEnemyController* AIController = Cast<ASecondEnemyController>(GetController());
-	if (!AIController) return;
-	UBlackboardComponent* BBComp = AIController->GetBlackboardComponent();
-	if (!BBComp) return;
-
-	ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(BBComp->GetValueAsEnum("CurrentState2"));
-
-	if (CurrentState == ESecondEnemyStates::Chase)
-	{
-		AActor* Target = Cast<AActor>(BBComp->GetValueAsObject("Target"));
-		if (!IsValid(Target)) return;
-
-		FVector Direction = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-		SetActorRotation(Direction.Rotation());
-	}
 }
 
 
@@ -71,8 +51,6 @@ float ASecondEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 	if (Health <= 40 && CurrentState != ESecondEnemyStates::Flee)
 	{
 		AIController->ChangeEnemyState(static_cast<uint8>(ESecondEnemyStates::Flee));
-		int State = BBComp->GetValueAsEnum("CurrentState2");
-		UE_LOG(LogTemp, Warning, TEXT("Vida: %f. Va a huir... estado %d"), Health, State);
 	}
 	else if (Health <= 0)
 	{
@@ -85,10 +63,12 @@ float ASecondEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 			MyController->GetBrainComponent()->StopLogic("Death");
 			SetLifeSpan(3.0f);
 			AShooterController* A = Cast<AShooterController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-			A->ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
+
+			
+			A->UpdateKillsPublic();
 		}
 	}
-	//Puedo retornar ncualquier tipo de float para dar información del golpe al causante del daño.
+	//Puedo retornar cualquier tipo de float para dar información del golpe al causante del daño.
 	return Health;
 }
 

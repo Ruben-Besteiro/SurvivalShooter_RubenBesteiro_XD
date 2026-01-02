@@ -104,7 +104,7 @@ float ABaseEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& Dama
 			MyController->GetBrainComponent()->StopLogic("Death");
 			SetLifeSpan(3.0f);
 			AShooterController* A = Cast<AShooterController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-			A->ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
+			A->UpdateKillsPublic();
 		}
 	}
 	//Puedo retornar ncualquier tipo de float para dar información del golpe al causante del daño.

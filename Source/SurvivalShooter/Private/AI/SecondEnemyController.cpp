@@ -30,7 +30,6 @@ void ASecondEnemyController::OnSensed(AActor* Actor, FAIStimulus Stimulus)
     auto SenseType = UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus);
     
     ESecondEnemyStates CurrentState = static_cast<ESecondEnemyStates>(GetBlackboardComponent()->GetValueAsEnum("CurrentState2"));
-    UE_LOG(LogTemp, Warning, TEXT("El estado actual es %d"), static_cast<int>(CurrentState));
 
     // Si el enemigo está huyendo, deja de sentir cosas
     if (CurrentState == ESecondEnemyStates::Flee) return;

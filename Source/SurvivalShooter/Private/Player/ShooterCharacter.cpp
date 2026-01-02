@@ -143,7 +143,7 @@ void AShooterCharacter::Shoot()
 		CurrentChargerAmmo--;
 		UGameplayStatics::PlaySound2D(GetWorld(), ShootSound, 0.3f);
 		auto ShooterController = Cast<AShooterController>(GetController());
-		ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+		ShooterController->UpdateAmmoPublic(CurrentReserveAmmo, CurrentChargerAmmo);
 		
 		DoShotEffect();
 		MakeNoise(0.5f, this, GetActorLocation());
@@ -193,8 +193,7 @@ void AShooterCharacter::Shoot()
 // así que cogí la animación menos mala, aunque pasa que el personaje recarga un arma invisible con el arma verdadera flotando por ahí
 void AShooterCharacter::Recharge()
 {
-	if (CurrentChargerAmmo == MaxChargerAmmo) return;
-	if (IsRecharging) return;
+	if (CurrentChargerAmmo == MaxChargerAmmo || IsRecharging || !CanJump) return;
     
 	IsRecharging = true;
 	UGameplayStatics::PlaySound2D(GetWorld(), RechargeSound);
@@ -212,20 +211,18 @@ void AShooterCharacter::Recharge()
 			IsRecharging = false;
             
 			auto ShooterController = Cast<AShooterController>(GetController());
-			ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+			ShooterController->UpdateAmmoPublic(CurrentReserveAmmo, CurrentChargerAmmo);
 		},1.5f,false
 	);
 }
 
 void AShooterCharacter::Jump()
 {
-	if (!CanJump) return;
+	if (!CanJump || IsRecharging) return;
 	
 	UGameplayStatics::PlaySound2D(GetWorld(), JumpSound, 0.5f);
 	
 	PlayAnimMontage(JumpMontage);
-	UE_LOG(LogTemp,Error,TEXT("%f"), PlayAnimMontage(JumpMontage));
-	
 	LaunchCharacter(FVector(0, 0, JumpForce), false, true);
 	CanJump = false;
 }
@@ -233,25 +230,21 @@ void AShooterCharacter::Jump()
 void AShooterCharacter::Aim()
 {
 	Zooming = true;
-	UE_LOG(LogTemp,Error,TEXT("%d"), Zooming);
 }
 
 void AShooterCharacter::DontAim()
 {
 	Zooming = false;
-	UE_LOG(LogTemp,Error,TEXT("%d"), Zooming);
 }
 
 
 void AShooterCharacter::Cure(int HPAmount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Vida vieja: %f"), CurrentHealth);
 	CurrentHealth += HPAmount;
 	if (CurrentHealth > MaxHealth) CurrentHealth = MaxHealth;
 	
 	auto ShooterController = Cast<AShooterController>(GetController());
-	UE_LOG(LogTemp, Warning, TEXT("Vida nueva: %f"), CurrentHealth);
-	ShooterController->ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(CurrentHealth / MaxHealth);
+	ShooterController->UpdateHealthPublic(CurrentHealth / MaxHealth);
 }
 
 void AShooterCharacter::AddAmmo(int AmmoAmount)
@@ -259,13 +252,12 @@ void AShooterCharacter::AddAmmo(int AmmoAmount)
 	// Llenamos el cargador, y lo que sobre, a la reserva
 	int ChargerAmmoAmount = MaxChargerAmmo - CurrentChargerAmmo;
 	int ReserveAmmoAmount = AmmoAmount - ChargerAmmoAmount;
-	UE_LOG(LogTemp, Warning, TEXT("%d %d"), ChargerAmmoAmount, ReserveAmmoAmount);
-	
+
 	CurrentChargerAmmo += ChargerAmmoAmount;
 	CurrentReserveAmmo += ReserveAmmoAmount;
 
 	auto ShooterController = Cast<AShooterController>(GetController());
-	ShooterController->ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(CurrentReserveAmmo, CurrentChargerAmmo);
+	ShooterController->UpdateAmmoPublic(CurrentReserveAmmo, CurrentChargerAmmo);
 }
 
 void AShooterCharacter::ApplyBerserkEffect(int Seconds)
@@ -285,9 +277,9 @@ void AShooterCharacter::ApplyBerserkEffect(int Seconds)
 		PPS.bOverride_ColorGain = true;
 		PPS.ColorGain = FVector4(0, 1, 0, 1);
 		PPS.bOverride_ColorSaturation = true;
-		PPS.ColorSaturation = FVector4(1, 2, 1, 1);
+		PPS.ColorSaturation = FVector4(1, 3, 1, 1);
 		PPS.bOverride_ColorContrast = true;
-		PPS.ColorContrast = FVector4(2, 2, 2, 1);
+		PPS.ColorContrast = FVector4(3, 3, 3, 1);
 
 		TimeBetweenAttacks = 0.066f;
 		GetCharacterMovement()->MaxWalkSpeed = OGMoveSpeed * 2;

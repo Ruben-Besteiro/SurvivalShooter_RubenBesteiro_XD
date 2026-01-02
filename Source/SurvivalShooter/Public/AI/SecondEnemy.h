@@ -45,9 +45,6 @@ private:
 	float Health = 200;
 
 	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	bool bIsStrafing;
-
-	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	float RotationSpeed;
 
 	bool Muerto = false;

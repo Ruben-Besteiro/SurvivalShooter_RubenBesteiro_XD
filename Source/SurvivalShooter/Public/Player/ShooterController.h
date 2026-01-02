@@ -31,9 +31,9 @@ public:
 	int Kills = 0;
 	bool IsDead = false;
 	
-	void ActualizarMunicionDesdeAquiPorqueSiNoNoFunciona(int CurrentReserveAmmo, int CurrentChargerAmmo);
-	void ActualizarVidaDesdeAquiPorqueSiNoNoFunciona(float e);
-	void ActualizarKillsDesdeAquiPorqueSiNoNoFunciona();
+	void UpdateAmmoPublic(int CurrentReserveAmmo, int CurrentChargerAmmo);
+	void UpdateHealthPublic(float e);
+	void UpdateKillsPublic();
 
 protected:
 	virtual void BeginPlay() override;
